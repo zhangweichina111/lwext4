@@ -1,3 +1,5 @@
+[![Join the chat at https://gitter.im/gkostka/lwext4](https://badges.gitter.im/gkostka/lwext4.svg)](https://gitter.im/gkostka/lwext4?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Build Status](https://travis-ci.org/gkostka/lwext4.svg)](https://travis-ci.org/gkostka/lwext4)
 
 ![lwext4](https://cloud.githubusercontent.com/assets/8606098/11697327/68306d88-9eb9-11e5-8807-81a2887f077e.png)
@@ -5,12 +7,14 @@
 About
 =====
 
+
 The main goal of the lwext4 project is to provide ext2/3/4 filesystem for microcontrollers. It may be an interesting alternative for traditional MCU filesystem libraries (mostly based on FAT32). Library has some cool and unique features in microcontrollers world:
  - directory indexing - fast file find and list operations
  - extents - fast big file truncate
  - journaling transactions & recovery - power loss resistance
 
-Lwext4 is an excellent choice for SD/MMC card, USB flash drive or other block based memory device. However it is not good for flash memory–based storage devices.
+Lwext4 is an excellent choice for SD/MMC card, USB flash drive or any other wear
+leveled memory types. However it is not good for raw flash devices.
 
 Feel free to contact me:
 kostka.grzegorz@gmail.com
@@ -186,21 +190,13 @@ Lwext4 could be compiled for many targets. Here are an examples for 8/16/32/64 b
 * generic for x86 or amd64
 * arm-none-eabi-gcc for ARM cortex-m0/m3/m4 microcontrollers
 * avr-gcc for AVR xmega microcontrollers
-* bfin-elf-gcc for blockfin processors 
+* bfin-elf-gcc for blackfin processors
 * msp430-gcc for msp430 microcontrollers
 
 Library has been tested only for generic (amd64) & ARM Cortex M architectures.
 For other targets compilation passes (with warnings somewhere) but tests are
 not done yet. Lwext4 code is written with endianes respect. Big endian
 behavior also hasn't been tested yet.
-
-Build bf518 library:
-------------
-```bash
- make bf518
- cd build_bf518
- make lwext4
- ```
 
 Build avrxmega7 library:
 ------------

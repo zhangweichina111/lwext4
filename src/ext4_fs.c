@@ -864,6 +864,8 @@ int ext4_fs_alloc_inode(struct ext4_fs *fs, struct ext4_inode_ref *inode_ref,
 	/* Initialize i-node */
 	struct ext4_inode *inode = inode_ref->inode;
 
+	memset(inode, 0, inode_size);
+
 	uint32_t mode;
 	if (is_dir) {
 		/*
@@ -899,7 +901,7 @@ int ext4_fs_alloc_inode(struct ext4_fs *fs, struct ext4_inode_ref *inode_ref,
 	if (inode_size > EXT4_GOOD_OLD_INODE_SIZE) {
 		uint16_t off = offsetof(struct ext4_inode, extra_isize);
 		uint16_t size = sizeof(struct ext4_inode) - off;
-		ext4_inode_set_extra_isize(inode, size);
+		ext4_inode_set_extra_isize(&fs->sb, inode, size);
 	}
 
 	/* Reset blocks array. For symbolic link inode, just

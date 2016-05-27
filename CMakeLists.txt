@@ -15,11 +15,11 @@ add_definitions(-DVERSION="${VERSION}")
 if    (CMAKE_SYSTEM_PROCESSOR STREQUAL  cortex-m0)
     #...
 elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL  cortex-m3)
-    #...
+    add_definitions(-DCONFIG_UNALIGNED_ACCESS=1)
 elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL  arm-sim)
     #...
 elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL  cortex-m4)
-    #...
+    add_definitions(-DCONFIG_UNALIGNED_ACCESS=1)
 elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL  bf518)
     #...
 elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL  avrxmega7)
@@ -37,6 +37,7 @@ elseif(LIB_ONLY)
 else()
     #Generic example target
     set(BLOCKDEV_TYPE  linux)
+    set (INSTALL_LIB 1)
     add_definitions(-DCONFIG_HAVE_OWN_OFLAGS=0)
     add_definitions(-DCONFIG_HAVE_OWN_ERRNO=0)
     add_definitions(-DCONFIG_HAVE_OWN_ASSERT=0)

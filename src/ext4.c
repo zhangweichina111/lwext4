@@ -48,6 +48,7 @@
 #include "ext4_dir.h"
 #include "ext4_inode.h"
 #include "ext4_super.h"
+#include "ext4_block_group.h"
 #include "ext4_dir_idx.h"
 #include "ext4_xattr.h"
 #include "ext4_journal.h"
@@ -565,7 +566,31 @@ static int __ext4_recover(const char *mount_point)
 		jbd_put_fs(jbd_fs);
 		free(jbd_fs);
 	}
+	if (r == EOK && !mp->fs.read_only) {
+		uint32_t bgid;
+		uint64_t free_blocks_count = 0;
+		uint32_t free_inodes_count = 0;
+		struct ext4_block_group_ref bg_ref;
 
+		/* Update superblock's stats */
+		for (bgid = 0;bgid < ext4_block_group_cnt(&mp->fs.sb);bgid++) {
+			r = ext4_fs_get_block_group_ref(&mp->fs, bgid, &bg_ref);
+			if (r != EOK)
+				goto Finish;
+
+			free_blocks_count +=
+				ext4_bg_get_free_blocks_count(bg_ref.block_group,
+						&mp->fs.sb);
+			free_inodes_count +=
+				ext4_bg_get_free_inodes_count(bg_ref.block_group,
+						&mp->fs.sb);
+
+			ext4_fs_put_block_group_ref(&bg_ref);
+		}
+		ext4_sb_set_free_blocks_cnt(&mp->fs.sb, free_blocks_count);
+		ext4_set32(&mp->fs.sb, free_inodes_count, free_inodes_count);
+		/* We don't need to save the superblock stats immediately. */
+	}
 
 Finish:
 	EXT4_MP_UNLOCK(mp);
@@ -2391,6 +2416,7 @@ Finish:
 int ext4_setxattr(const char *path, const char *name, size_t name_len,
 		  const void *data, size_t data_size, bool replace)
 {
+	bool found;
 	int r = EOK;
 	ext4_file f;
 	uint32_t inode;
@@ -2407,8 +2433,9 @@ int ext4_setxattr(const char *path, const char *name, size_t name_len,
 		return EROFS;
 
 	dissected_name = ext4_extract_xattr_name(name, name_len,
-				&name_index, &dissected_len);
-	if (!dissected_len)
+				&name_index, &dissected_len,
+				&found);
+	if (!found)
 		return EINVAL;
 
 	EXT4_MP_LOCK(mp);
@@ -2448,6 +2475,7 @@ Finish:
 int ext4_getxattr(const char *path, const char *name, size_t name_len,
 		  void *buf, size_t buf_size, size_t *data_size)
 {
+	bool found;
 	int r = EOK;
 	ext4_file f;
 	uint32_t inode;
@@ -2461,8 +2489,9 @@ int ext4_getxattr(const char *path, const char *name, size_t name_len,
 		return ENOENT;
 
 	dissected_name = ext4_extract_xattr_name(name, name_len,
-				&name_index, &dissected_len);
-	if (!dissected_len)
+				&name_index, &dissected_len,
+				&found);
+	if (!found)
 		return EINVAL;
 
 	EXT4_MP_LOCK(mp);
@@ -2583,6 +2612,7 @@ Finish:
 
 int ext4_removexattr(const char *path, const char *name, size_t name_len)
 {
+	bool found;
 	int r = EOK;
 	ext4_file f;
 	uint32_t inode;
@@ -2599,8 +2629,9 @@ int ext4_removexattr(const char *path, const char *name, size_t name_len)
 		return EROFS;
 
 	dissected_name = ext4_extract_xattr_name(name, name_len,
-						&name_index, &dissected_len);
-	if (!dissected_len)
+						&name_index, &dissected_len,
+						&found);
+	if (!found)
 		return EINVAL;
 
 	EXT4_MP_LOCK(mp);
@@ -2882,6 +2913,11 @@ End:
 	EXT4_MP_UNLOCK(mp);
 
 	return r;
+}
+
+int ext4_dir_mv(const char *path, const char *new_path)
+{
+	return ext4_frename(path, new_path);
 }
 
 int ext4_dir_mk(const char *path)
